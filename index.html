@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>In tem sản xuất chuyền dập</title>
+<style>
+:root{--bg:#f0f1f4;--card:#fff;--text:#222;--muted:#666;--line:#d5d8de;--red:#d4202a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1c20;--card:#26272c;--text:#eee;--muted:#aaa;--line:#444}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
+header{background:#fff;text-align:center;padding:10px 8px;box-shadow:0 2px 6px #0002}
+header b{display:block;font:900 44px Arial,sans-serif;color:var(--red);letter-spacing:-2px;line-height:1}
+header span{font:bold 26px "Times New Roman",serif;color:#c8202a}
+.plan{margin:16px 24px 0;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ptitle{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--red)}
+.prow{display:flex;flex-wrap:wrap;gap:10px}
+.prow label{display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:3px;flex:1 1 100px;min-width:90px}
+.prow input,.frow input{padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text);font-size:14px;width:100%}
+.form{display:flex;flex-direction:column;gap:10px;padding:16px 24px 8px}
+.frow{display:flex;flex-wrap:wrap;gap:10px;border-radius:6px;align-items:center}
+.frow input{text-transform:uppercase;flex:1 1 120px;min-width:100px;width:auto}
+.frow input[data-k=kh],.frow input[data-k=sl],.frow input[data-k=bo]{background:#fff6d6;color:#222}
+.hint{flex:1 1 100%;font-size:12px;color:var(--muted);margin-top:-4px}
+.btns{padding:8px 24px 14px;display:flex;gap:12px;flex-wrap:wrap}
+button{background:linear-gradient(#e53935,#d32f2f);color:#fff;border:0;border-radius:6px;padding:10px 18px;font-size:14px;cursor:pointer;box-shadow:0 2px 5px #0003}
+button.gray{background:#666}
+button.x{padding:2px 8px;box-shadow:none;background:#999}
+.list{padding:0 24px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:var(--card);font-size:13px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+.note{padding:6px 24px;color:var(--muted);font-size:13px}
+#out{padding:16px 24px}
+.page{width:max-content;margin:0 auto 12px;display:grid;grid-template-columns:repeat(3,64mm);grid-auto-rows:20mm;background:#fff;color:#000;border-top:.35mm solid #000;border-left:.35mm solid #000}
+.tem{width:64mm;height:20mm;border-right:.35mm solid #000;border-bottom:.35mm solid #000;padding:.4mm 1mm;font:normal 9pt/1.05 "Times New Roman",Times,serif;text-transform:uppercase;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.tem .r{display:flex;justify-content:space-between;gap:2px;white-space:nowrap}
+.tem mark{background:#ff0;color:#000;font-weight:bold;padding:0 .5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media print{
+ @page{size:A4;margin:8mm}
+ body{background:#fff}
+ header,.plan,.form,.btns,.list,.note{display:none}
+ #out{padding:0}
+ .page{margin:0 auto;page-break-after:always;break-after:page}
+ .page:last-child{page-break-after:auto;break-after:auto}
+ .tem{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<header><b>Rinnai</b><span>IN TEM SẢN XUẤT CHUYỀN DẬP</span></header>
+
+<div class="plan" id="plan"></div>
+<div class="form" id="form"></div>
+<div class="btns">
+ <button onclick="them()">Tạo tem</button>
+ <button class="gray" onclick="addRows(1)">+ Thêm dòng nhập</button>
+ <button class="gray" onclick="tao(true);window.print()">In</button>
+ <button class="gray" onclick="xoaHet()">Xóa hết dòng nhập</button>
+ <button class="gray" onclick="toggleDM()">Bảng mã dây / line</button>
+ <button class="gray" onclick="toggleMM()">Bảng máy / người làm</button>
+</div>
+<div class="list" id="dm" style="display:none;padding-bottom:10px">
+ <div class="note" style="padding:6px 0">Dán bảng từ Excel (đúng thứ tự cột như file của bạn: STT, Mã Dây, LINE, Số lượng định mức, S/lượng KH, Số lượng/bó). Cũng nhận 4 cột: Mã dây, LINE, Định mức, SL/bó. Bảng lưu sẽ thay bảng cũ.</div>
+ <textarea id="dmtxt" rows="8" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace"></textarea>
+ <div style="margin-top:6px;display:flex;gap:10px;align-items:center"><button onclick="saveDM()">Lưu bảng</button><span id="dmmsg" class="note" style="padding:0"></span></div>
+</div>
+<div class="list" id="mm" style="display:none;padding-bottom:10px">
+ <div class="note" style="padding:6px 0">Mỗi dòng một máy: cột 1 là MÁY, cột 2 là Người làm (dán từ Excel hoặc gõ trực tiếp, ngăn cách bằng Tab hoặc dấu cách). Sửa rồi bấm Lưu để áp dụng.</div>
+ <textarea id="mmtxt" rows="10" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace"></textarea>
+ <div style="margin-top:6px;display:flex;gap:10px;align-items:center"><button onclick="saveMM()">Lưu bảng</button><span id="mmmsg" class="note" style="padding:0"></span></div>
+</div>
+<div class="note" id="note">Nhập kế hoạch từng line ở khung trên (tự lưu). Ở mỗi dòng chỉ cần nhập Mã dây, Máy, N.LÀM, LOT T, LOT S: SL/bó và Số bó tự nhảy. Bấm “Tạo tem” để tạo tem cho tất cả dòng đã nhập (các dòng vẫn được giữ nguyên để sửa tiếp), rồi bấm “In”.</div>
+<div class="list" id="list"></div>
+<div id="out"></div>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var items=[];
+try{items=JSON.parse(localStorage.getItem("tem_items")||"[]")}catch(e){items=[]}
+function save(){try{localStorage.setItem("tem_items",JSON.stringify(items))}catch(e){}}
+function fmt(d){if(!d)return"";var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+
+/* Dữ liệu mã: [Mã dây, LINE, Định mức, SL/bó] */
+var DEF=[["00I","JS0073",1,200],["01H","JS0074",2,200],["01I","M09",1,200],["01M","M11",1,200],["01Q","H205",1,200],["02E","H208",1,200],["02H","H253",1,200],["02I","U362",1,200],["02M","RTD63",1,200],["02Q","JS0073",1,100],["03I","JS0074",1,100],["04H","M09",1,100],["04I","M11",2,100],["04M","H205",1,100],["04Q","H208",1,100],["05H","H253",2,100]];
+var DATA={},LINES=[],PLAN={};
+function loadData(){
+ var s=null;try{s=JSON.parse(localStorage.getItem("tem_data")||"null")}catch(e){}
+ var arr=(s&&s.length)?s:DEF;DATA={};LINES=[];
+ arr.forEach(function(a){DATA[a[0]]={line:a[1],dm:a[2],pcs:a[3]};if(LINES.indexOf(a[1])<0)LINES.push(a[1])});
+ try{PLAN=JSON.parse(localStorage.getItem("tem_plan")||"{}")}catch(e){PLAN={}}
+}
+function renderPlan(){
+ $("plan").innerHTML='<div class="ptitle">KẾ HOẠCH THEO LINE (nhập 1 lần, tự lưu, sửa được)</div><div class="prow">'+LINES.map(function(l){return '<label>'+esc(l)+'<input type="number" min="0" data-l="'+esc(l)+'" value="'+esc(PLAN[l]||"")+'" placeholder="SL KH"></label>'}).join("")+'</div>';
+}
+$("plan").addEventListener("input",function(e){
+ var l=e.target.getAttribute("data-l");if(!l)return;
+ PLAN[l]=e.target.value;
+ try{localStorage.setItem("tem_plan",JSON.stringify(PLAN))}catch(x){}
+ document.querySelectorAll("#form .frow").forEach(function(r){fill(r)});
+});
+
+/* Dòng nhập */
+var F=["ma","sl","may","nlam","ngay","bo","lott","lots","kt"],PH=["Mã dây","SL/bó","Máy","N.LÀM","","Số bó","LOT T","LOT S","KT"];
+function addRows(n){
+ var f=$("form");
+ for(var r=0;r<n;r++){
+  var d=document.createElement("div");d.className="frow";
+  d.innerHTML=F.map(function(k,i){return k=="ngay"?'<input data-k="ngay" type="date" value="'+today()+'">':'<input data-k="'+k+'" '+(k=="bo"||k=="kh"||k=="sl"?'type="number" min="1" ':'')+'placeholder="'+PH[i]+'">'}).join("")+'<div class="hint"></div>';
+  f.appendChild(d);
+ }
+}
+function G(r,k){return r.querySelector('[data-k="'+k+'"]')}
+function calcBo(r){var kh=parseFloat(r.dataset.kh),sl=parseFloat(G(r,"sl").value);if(kh>0&&sl>0)G(r,"bo").value=Math.ceil(kh/sl)}
+function fill(r,keep){
+ var ma=G(r,"ma").value.trim().toUpperCase(),h=r.querySelector(".hint"),d=DATA[ma];
+ if(!d){r.dataset.kh="";h.textContent=ma?"Mã này chưa có trong bảng mã dây / line.":"";return}
+ if(!keep)G(r,"sl").value=d.pcs;
+ var p=parseFloat(PLAN[d.line]);
+ if(p>0){r.dataset.kh=p*d.dm;h.textContent="LINE "+d.line+" · KH "+p+" × định mức "+d.dm+" = "+(p*d.dm)+" · "+d.pcs+" /bó"}
+ else{r.dataset.kh="";h.textContent="LINE "+d.line+" · định mức "+d.dm+" · chưa nhập kế hoạch cho line này."}
+ if(!keep)calcBo(r);
+}
+$("form").addEventListener("input",function(e){
+ var k=e.target.getAttribute("data-k"),r=e.target.parentNode;
+ if(k=="ma")fill(r);else if(k=="sl")calcBo(r);else if(k=="may"){var pn=MAY[e.target.value.trim().toUpperCase()];if(pn)G(r,"nlam").value=pn}
+});
+
+function them(){
+ var n=0,bad=0;items=[];
+ document.querySelectorAll("#form .frow").forEach(function(r){
+  var it={};r.querySelectorAll("input").forEach(function(i){it[i.getAttribute("data-k")]=i.value.trim()});
+  var any=["ma","sl","may","nlam","bo","lott","lots","kt"].some(function(k){return it[k]});
+  if(!any)return;
+  it.bo=parseInt(it.bo,10);
+  if(!it.ma||!it.bo||it.bo<1){bad++;r.style.outline="2px solid #d4202a";return}
+  ["ma","sl","may","nlam","lott","lots","kt"].forEach(function(k){it[k]=it[k].toUpperCase()});
+  items.push(it);n++;r.style.outline="";
+  
+  
+ });
+ if(bad)alert("Có "+bad+" dòng thiếu Mã dây hoặc Số bó (đã viền đỏ). Có thể do line chưa nhập kế hoạch hoặc mã chưa có trong bảng.");
+ save();tao(!!n);saveRows();
+}
+function xoa(i){items.splice(i,1);save();render();tao(true)}
+function xoaHet(){if(confirm("Xóa toàn bộ dòng đã nhập?")){items=[];save();$("form").innerHTML="";addRows(1);saveRows();$("out").innerHTML=""}}
+function render(){
+ if(!items.length){$("list").innerHTML="";return}
+ var h="<table><tr><th>#</th><th>Mã dây</th><th>SL</th><th>Máy</th><th>N.LÀM</th><th>Ngày</th><th>Số bó</th><th>LOT T</th><th>LOT S</th><th>KT</th><th></th></tr>";
+ items.forEach(function(t,i){h+="<tr><td>"+(i+1)+"</td><td>"+esc(t.ma)+"</td><td>"+esc(t.sl)+"</td><td>"+esc(t.may)+"</td><td>"+esc(t.nlam)+"</td><td>"+fmt(t.ngay)+"</td><td>"+t.bo+"</td><td>"+esc(t.lott)+"</td><td>"+esc(t.lots)+"</td><td>"+esc(t.kt)+"</td><td><button class='x' onclick='xoa("+i+")'>Xóa</button></td></tr>"});
+ $("list").innerHTML=h+"</table>";
+}
+function tao(q){
+ if(!items.length){if(!q)alert("Chưa có mã nào. Hãy nhập và bấm “Tạo tem”.");$("out").innerHTML="";return}
+ var all=[];
+ items.forEach(function(t){
+  for(var b=1;b<=t.bo;b++){
+   all.push('<div class="tem">'
+   +'<div class="r"><span>MÃ DÂY:<mark>'+esc(t.ma)+'</mark></span><span>SL:'+esc(t.sl)+'</span></div>'
+   +'<div class="r"><span><b>BÓ:'+b+'</b></span><span>MÁY:'+esc(t.may)+'</span></div>'
+   +'<div class="r"><span>LOT T:'+esc(t.lott)+'</span><span>LOT S:'+esc(t.lots)+'</span></div>'
+   +'<div class="r"><span>KT:'+esc(t.kt)+'</span></div>'
+   +'<div class="r"><span>NGÀY:'+fmt(t.ngay)+'</span><span>N.LÀM:'+esc(t.nlam)+'</span></div>'
+   +'</div>');
+  }
+ });
+ var out="";
+ for(var i=0;i<all.length;i+=42){out+='<div class="page">'+all.slice(i,i+42).join("")+'</div>'}
+ $("out").innerHTML=out;
+ $("note").textContent="Đã tạo "+all.length+" tem ("+Math.ceil(all.length/42)+" trang A4, 42 tem/trang). Bấm “In” (hoặc Ctrl + P) để in.";
+ if(!q)$("out").scrollIntoView({behavior:"smooth"});
+}
+
+/* Bảng mã dây / line */
+function toggleDM(){
+ var d=$("dm");
+ if(d.style.display=="none"){
+  $("dmtxt").value=Object.keys(DATA).map(function(k){var x=DATA[k];return k+"\t"+x.line+"\t"+x.dm+"\t"+x.pcs}).join("\n");
+  $("dmmsg").textContent="Đang có "+Object.keys(DATA).length+" mã, "+LINES.length+" line.";
+  d.style.display="block";
+ }else d.style.display="none";
+}
+function saveDM(){
+ var arr=[];
+ $("dmtxt").value.split(/\r?\n/).forEach(function(l){
+  if(!l.trim())return;
+  var p=l.split(/\t|;/).map(function(x){return x.trim()});
+  if(p.length<4)p=l.trim().split(/\s+/);
+  var a;
+  if(p.length>=6)a=[p[1],p[2],p[3],p[5]];else if(p.length>=4)a=[p[0],p[1],p[2],p[3]];else return;
+  var dm=parseFloat(a[2]),pc=parseFloat(a[3]);
+  if(!a[0]||!a[1]||!(dm>0)||!(pc>0))return;
+  arr.push([a[0].toUpperCase(),a[1].toUpperCase(),dm,pc]);
+ });
+ if(!arr.length){$("dmmsg").textContent="Không đọc được dòng nào. Kiểm tra lại cột.";return}
+ try{localStorage.setItem("tem_data",JSON.stringify(arr))}catch(e){}
+ loadData();renderPlan();
+ $("dmmsg").textContent="Đã lưu "+arr.length+" mã, "+LINES.length+" line.";
+}
+
+var DEFM=[["A","PHƯƠNG"],["B","PHƯƠNG"],["C","PHIA"],["D","PHIA"],["F","THƯƠNG"],["G","THƯƠNG"],["E","DUNG"],["I","DUNG"],["H","P.LIỄU"],["1","HẰNG"],["2","HẰNG"],["3","NHUNG"],["4","NHUNG"],["5","LỢI"],["6","LỢI"],["7","HÒA"],["8","HÒA"],["9","LỢI"]],MAY={};
+function loadMay(){var s=null;try{s=JSON.parse(localStorage.getItem("tem_may")||"null")}catch(e){}var a=(s&&s.length)?s:DEFM;MAY={};a.forEach(function(x){MAY[x[0]]=x[1]})}
+function toggleMM(){var d=$("mm");if(d.style.display=="none"){$("mmtxt").value=Object.keys(MAY).map(function(k){return k+"\t"+MAY[k]}).join("\n");$("mmmsg").textContent="Đang có "+Object.keys(MAY).length+" máy.";d.style.display="block"}else d.style.display="none"}
+function saveMM(){
+ var arr=[];
+ $("mmtxt").value.split(/\r?\n/).forEach(function(l){
+  if(!l.trim())return;
+  var p=l.split(/\t|;/).map(function(x){return x.trim()});
+  if(p.length<2){var m=l.trim().match(/^(\S+)\s+(.+)$/);p=m?[m[1],m[2]]:[]}
+  if(p.length>=2&&p[0]&&p[1])arr.push([p[0].toUpperCase(),p[1].toUpperCase()]);
+ });
+ if(!arr.length){$("mmmsg").textContent="Không đọc được dòng nào.";return}
+ try{localStorage.setItem("tem_may",JSON.stringify(arr))}catch(e){}
+ loadMay();$("mmmsg").textContent="Đã lưu "+arr.length+" máy.";
+}
+/* Enter / mũi tên nhảy ô như Excel */
+$("form").addEventListener("keydown",function(e){
+ var t=e.target;if(t.tagName!="INPUT")return;
+ var k=e.key,r=t.parentNode,rows=Array.prototype.slice.call(document.querySelectorAll("#form .frow")),ri=rows.indexOf(r),ci=Array.prototype.slice.call(r.querySelectorAll("input")).indexOf(t),dt=t.type=="date";
+ function go(row,col){var x=rows[row];if(!x)return;var i=x.querySelectorAll("input")[col];if(i){i.focus();try{i.select()}catch(z){}}}
+ if(k=="Enter"){
+  e.preventDefault();
+  if(e.shiftKey){go(ri-1,ci)}
+  else{if(ri==rows.length-1){addRows(1);rows=Array.prototype.slice.call(document.querySelectorAll("#form .frow"))}go(ri+1,ci)}
+  return;
+ }
+ if(dt)return;
+ if(k=="ArrowDown"||k=="ArrowUp"){e.preventDefault();go(ri+(k=="ArrowDown"?1:-1),ci);return}
+ if(k=="ArrowLeft"||k=="ArrowRight"){
+  var s=t.selectionStart,en=t.selectionEnd,n=t.value.length,edge=(s==null)||(k=="ArrowLeft"?(s==0&&en==0):(s==n&&en==n));
+  if(edge){var nc=ci+(k=="ArrowRight"?1:-1);if(nc>=0){e.preventDefault();go(ri,nc)}}
+ }
+});
+loadMay();
+function saveRows(){var a=[];document.querySelectorAll("#form .frow").forEach(function(r){var o={};r.querySelectorAll("input").forEach(function(i){o[i.getAttribute("data-k")]=i.value});a.push(o)});try{localStorage.setItem("tem_rows",JSON.stringify(a))}catch(e){}}
+items=[];
+loadData();renderPlan();
+(function(){
+ var a=[];try{a=JSON.parse(localStorage.getItem("tem_rows")||"[]")}catch(e){}
+ if(!a.length){addRows(1);return}
+ addRows(a.length);
+ document.querySelectorAll("#form .frow").forEach(function(r,i){
+  var o=a[i]||{};
+  r.querySelectorAll("input").forEach(function(x){var k=x.getAttribute("data-k");if(k!="ngay"&&o[k]!=null)x.value=o[k]});
+  if(G(r,"ma").value)fill(r,true);
+ });
+})();
+$("form").addEventListener("input",function(){saveRows()});
+</script>
+</body>
+</html>
