@@ -55,7 +55,7 @@ th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;white-space:n
  <button onclick="them()">Tạo tem</button>
  <button class="gray" onclick="addRows(1)">+ Thêm dòng nhập</button>
  <button class="gray" onclick="tao(true);window.print()">In</button>
- <button class="gray" onclick="xoaHet()">Xóa danh sách</button>
+ <button class="gray" onclick="xoaHet()">Xóa hết dòng nhập</button>
  <button class="gray" onclick="toggleDM()">Bảng mã dây / line</button>
  <button class="gray" onclick="toggleMM()">Bảng máy / người làm</button>
 </div>
@@ -69,7 +69,7 @@ th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;white-space:n
  <textarea id="mmtxt" rows="10" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace"></textarea>
  <div style="margin-top:6px;display:flex;gap:10px;align-items:center"><button onclick="saveMM()">Lưu bảng</button><span id="mmmsg" class="note" style="padding:0"></span></div>
 </div>
-<div class="note" id="note">Nhập kế hoạch từng line ở khung trên (tự lưu). Ở mỗi dòng chỉ cần nhập Mã dây, Máy, N.LÀM, LOT T, LOT S: SL/bó và Số bó tự nhảy. Bấm “Tạo tem” để tạo tem cho tất cả dòng đã nhập, rồi bấm “In”.</div>
+<div class="note" id="note">Nhập kế hoạch từng line ở khung trên (tự lưu). Ở mỗi dòng chỉ cần nhập Mã dây, Máy, N.LÀM, LOT T, LOT S: SL/bó và Số bó tự nhảy. Bấm “Tạo tem” để tạo tem cho tất cả dòng đã nhập (các dòng vẫn được giữ nguyên để sửa tiếp), rồi bấm “In”.</div>
 <div class="list" id="list"></div>
 <div id="out"></div>
 
@@ -113,14 +113,14 @@ function addRows(n){
 }
 function G(r,k){return r.querySelector('[data-k="'+k+'"]')}
 function calcBo(r){var kh=parseFloat(r.dataset.kh),sl=parseFloat(G(r,"sl").value);if(kh>0&&sl>0)G(r,"bo").value=Math.ceil(kh/sl)}
-function fill(r){
+function fill(r,keep){
  var ma=G(r,"ma").value.trim().toUpperCase(),h=r.querySelector(".hint"),d=DATA[ma];
  if(!d){r.dataset.kh="";h.textContent=ma?"Mã này chưa có trong bảng mã dây / line.":"";return}
- G(r,"sl").value=d.pcs;
+ if(!keep)G(r,"sl").value=d.pcs;
  var p=parseFloat(PLAN[d.line]);
  if(p>0){r.dataset.kh=p*d.dm;h.textContent="LINE "+d.line+" · KH "+p+" × định mức "+d.dm+" = "+(p*d.dm)+" · "+d.pcs+" /bó"}
  else{r.dataset.kh="";h.textContent="LINE "+d.line+" · định mức "+d.dm+" · chưa nhập kế hoạch cho line này."}
- calcBo(r);
+ if(!keep)calcBo(r);
 }
 $("form").addEventListener("input",function(e){
  var k=e.target.getAttribute("data-k"),r=e.target.parentNode;
@@ -128,7 +128,7 @@ $("form").addEventListener("input",function(e){
 });
 
 function them(){
- var n=0,bad=0;
+ var n=0,bad=0;items=[];
  document.querySelectorAll("#form .frow").forEach(function(r){
   var it={};r.querySelectorAll("input").forEach(function(i){it[i.getAttribute("data-k")]=i.value.trim()});
   var any=["ma","sl","may","nlam","bo","lott","lots","kt"].some(function(k){return it[k]});
@@ -137,14 +137,14 @@ function them(){
   if(!it.ma||!it.bo||it.bo<1){bad++;r.style.outline="2px solid #d4202a";return}
   ["ma","sl","may","nlam","lott","lots","kt"].forEach(function(k){it[k]=it[k].toUpperCase()});
   items.push(it);n++;r.style.outline="";
-  r.querySelectorAll("input").forEach(function(i){if(i.getAttribute("data-k")!="ngay")i.value=""});
-  r.querySelector(".hint").textContent="";r.dataset.kh="";
+  
+  
  });
  if(bad)alert("Có "+bad+" dòng thiếu Mã dây hoặc Số bó (đã viền đỏ). Có thể do line chưa nhập kế hoạch hoặc mã chưa có trong bảng.");
- if(n){save();render();tao(true)}
+ save();tao(!!n);saveRows();
 }
 function xoa(i){items.splice(i,1);save();render();tao(true)}
-function xoaHet(){if(items.length&&confirm("Xóa toàn bộ danh sách?")){items=[];save();render();$("out").innerHTML=""}}
+function xoaHet(){if(confirm("Xóa toàn bộ dòng đã nhập?")){items=[];save();$("form").innerHTML="";addRows(1);saveRows();$("out").innerHTML=""}}
 function render(){
  if(!items.length){$("list").innerHTML="";return}
  var h="<table><tr><th>#</th><th>Mã dây</th><th>SL</th><th>Máy</th><th>N.LÀM</th><th>Ngày</th><th>Số bó</th><th>LOT T</th><th>LOT S</th><th>KT</th><th></th></tr>";
@@ -233,7 +233,20 @@ $("form").addEventListener("keydown",function(e){
  }
 });
 loadMay();
-loadData();renderPlan();addRows(1);render();tao(true);
+function saveRows(){var a=[];document.querySelectorAll("#form .frow").forEach(function(r){var o={};r.querySelectorAll("input").forEach(function(i){o[i.getAttribute("data-k")]=i.value});a.push(o)});try{localStorage.setItem("tem_rows",JSON.stringify(a))}catch(e){}}
+items=[];
+loadData();renderPlan();
+(function(){
+ var a=[];try{a=JSON.parse(localStorage.getItem("tem_rows")||"[]")}catch(e){}
+ if(!a.length){addRows(1);return}
+ addRows(a.length);
+ document.querySelectorAll("#form .frow").forEach(function(r,i){
+  var o=a[i]||{};
+  r.querySelectorAll("input").forEach(function(x){var k=x.getAttribute("data-k");if(k!="ngay"&&o[k]!=null)x.value=o[k]});
+  if(G(r,"ma").value)fill(r,true);
+ });
+})();
+$("form").addEventListener("input",function(){saveRows()});
 </script>
 </body>
 </html>
